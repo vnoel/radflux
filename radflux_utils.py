@@ -37,12 +37,12 @@ def lw_clearsky(temp, rh):
     epsilon = a * np.power(e / tk, b)
     sigma = 5.67e-8
     lw = epsilon * sigma * np.power(tk, 4)
-
+    
     return lw
 
 
 def sw_clearsky(solar_angle):
-
+    
     a = 1100
     b = 1.0987
     c = 0.9472
@@ -57,7 +57,7 @@ def fix_lon(var):
     var2[:,:,180:] = var[:,:,:180]
     var2[:,:,:180] = var[:,:,180:]
     return var2
-    
+
 
 def ceres_nc_read(ceresfile):
     
@@ -87,14 +87,14 @@ def ceres_nc_read(ceresfile):
     
     data = {'time':time, 'lon':lon, 'lat':lat, 'swup':swup, 'lwup':lwup, 'swupclr':swupclr, 'lwupclr':lwupclr, 'dates':dates}
     return data
-    
+
 
 def ceres_read(ceresfile):
     
     # mat = matlab.loadmat(ceresfile)
     # lon = mat['lon']
     # lat = mat['lat']
-
+    
     h5file = h5py.File(ceresfile)
     lon = h5file['lon'][:]
     lat = h5file['lat'][:]
@@ -109,13 +109,13 @@ def ceres_read(ceresfile):
     lwupclr = h5file['lwupclr'][:]
     
     h5file.close()
-
+    
     data = {'time':time, 'lon':lon, 'lat':lat, 'swup':swup, 'lwup':lwup, 'swupclr':swupclr, 'lwupclr':lwupclr}
     return data
 
 
 def radflux_read(radfile):
-
+    
     x = np.loadtxt(radfile, converters={0:mdates.datestr2num})
     # time = np.array(mdates.num2date(x[:,0]), dtype=np.float64)
     date = mdates.num2date(x[0,0])
@@ -130,14 +130,14 @@ def radflux_read(radfile):
     data['LW flux'] = np.array(lw, dtype=np.float64)
     
     return time, data, date
-
     
+
 def radflux_year_read(radfile):
     
     x = np.genfromtxt(radfile, delimiter=',', missing_values='NaN')
     if x.ndim < 2:
         return
-        
+    
     yy = x[:,0]
     mm = x[:,1]
     dd = x[:,2]
@@ -158,7 +158,7 @@ def radflux_year_read(radfile):
 
 
 def find_meteo_file(date, path):
-
+    
     mask = path + '/meteoz1_*_%04d%02d%02d*.asc' % (date.year, date.month, date.day)
     files = glob.glob(mask)
     if len(files) < 1:
@@ -172,7 +172,7 @@ def find_meteo_file(date, path):
 
 
 def meteo_read(date, path):
-
+    
     meteo_file = find_meteo_file(date, path)
     if meteo_file is not None:
         x = np.loadtxt(meteo_file, converters={0:mdates.datestr2num})
@@ -184,7 +184,7 @@ def meteo_read(date, path):
 
 
 def meteo_year_read(year, path):
-
+    
     print 'Reading meteo data for ', year
     meteo_file = path + '/MeteoZ1_SIRTA_Z1_1hour%04d.txt' % (year)
     print 'Trying ', meteo_file
@@ -202,9 +202,9 @@ def meteo_year_read(year, path):
     for i in np.r_[0:len(y)]:
         time.append(datetime(y[i], m[i], d[i], hh[i], mm[i]))
     epochtime = mdates.num2epoch(mdates.date2num(time))
-
+    
     meteo = {'time':time, 'Temperature [C]':matemperature, 'epochtime':epochtime, 'temperature':temperature}
-
+    
     return meteo
 
 
@@ -225,8 +225,8 @@ def solar_year_read(year):
         except ValueError:
             continue
         time.append(date)
-        angle.append(x[i,3])                
-
+        angle.append(x[i,3])
+    
     solar = {'time':time, 'Solar Angle [deg]':angle}
     return solar
 

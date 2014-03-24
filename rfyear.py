@@ -29,6 +29,8 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 
 from radflux_utils import radflux_year_read, meteo_year_read
 
+from sctd_sirta import sctd
+
 
 def add_date_axis(plot):
     
@@ -130,7 +132,7 @@ class RFTimeSeries(HasTraits):
             # this should never happen
             return
     
-        self.rfcontainer.index_range.set_bounds(self.time[0], self.time[-1])
+        self.rfcontainer.index_range.set_bounds(self.data['time_num'][0], self.data['time_num'][-1])
         idx = np.isfinite(self.data[self.data_to_plot])
         self.rfcontainer.value_range.set_bounds(np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
     
@@ -146,14 +148,16 @@ class RFTimeSeries(HasTraits):
         self.rfcontainer.request_redraw()
     
     
-    def open_year(self, rf_file):
+    def open_year(self):
         
-        data = radflux_year_read(rf_file)
-        if data is not None:
-            self.time = data['time']
-            self.date = data['date']
-            self.data = data
-            self.meteo = meteo_year_read(self.date.year, os.path.dirname(rf_file))
+        # data = radflux_year_read(rf_file)
+        data = sctd()
+        self.data = data
+        # if data is not None:
+            # self.time = data['time']
+            # self.date = data['date']
+            # self.data = data
+            # self.meteo = meteo_year_read(self.date.year, os.path.dirname(rf_file))
 
         
     def save_multipage_pdf(self, pdfname, plots_list):
@@ -191,20 +195,20 @@ class RFTimeSeries(HasTraits):
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
             return
             
-        self.plot_title = self.basetitle + str(self.date.year)
+        self.plot_title = self.basetitle # + str(self.date.year)
         self.rfcontainer.y_axis.title = self.data_to_plot + ' (W/m2)'
         
         self.rfcontainer.title = self.plot_title
-        self.rfdata.set_data('index', self.time)
+        self.rfdata.set_data('index', self.data['time_num'])
         self.rfdata.set_data('value', self.data[self.data_to_plot])
         self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
-        self.rfcontainer.index_mapper.domain_limits = (self.time[0], self.time[-1])
+        self.rfcontainer.index_mapper.domain_limits = (self.data['time_num'][0], self.data['time_num'][-1])
     
-        self.sadata.set_data('index', self.time)
-        self.sadata.set_data('value', self.data['solar angle'])
+        self.sadata.set_data('index', self.data['time_photometer_num'])
+        self.sadata.set_data('value', self.data['solar_zenith_angle'])
         
-        self.tdata.set_data('index', self.meteo['epochtime'])
-        self.tdata.set_data('value', self.meteo['temperature'])
+        self.tdata.set_data('index', self.data['time_num'])
+        self.tdata.set_data('value', self.data['temp'])
         
         self._reset_zoom_button_fired()
     
@@ -328,27 +332,27 @@ class RFController(Handler):
         
     def open_sw_file(self, ui_info):
         
-        swfile = self.open_file()
-        if swfile is None:
-            return
+        # swfile = self.open_file()
+        # if swfile is None:
+        #     return
 
-        print 'Opening ' + swfile
-        self.view.open_year(swfile)
-        self.view.data_to_plot = 'total SW flux'
-        self.view.clearsky_name = 'sw_clearsky'
+        # print 'Opening ' + 
+        self.view.open_year()
+        self.view.data_to_plot = 'sw'
+        self.view.clearsky_name = 'sw_cs'
         self.view.set_data_in_plot()
             
             
     def open_lw_file(self, ui_info):
 
-        lwfile = self.open_file()
-        if lwfile is None:
-            return
+        # lwfile = self.open_file()
+        # if lwfile is None:
+        #     return
 
-        print 'Opening ' + lwfile
-        self.view.open_year(lwfile)
-        self.view.data_to_plot = 'LW flux'
-        self.view.clearsky_name = 'lw_clearsky'
+        # print 'Opening ' + lwfile
+        self.view.open_year()
+        self.view.data_to_plot = 'lw'
+        self.view.clearsky_name = 'lw_cs'
         self.view.set_data_in_plot()
 
 

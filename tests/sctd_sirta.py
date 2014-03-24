@@ -1,0 +1,1 @@
+../sctd_sirta.py
