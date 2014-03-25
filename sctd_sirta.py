@@ -42,6 +42,7 @@ class sctd(dict):
         # uncertainty ±5 W/m2 at 1000 W/m2
         # missing value -999.96
         self['lw'] = nc.variables['rlds'][:]
+        self['lw'][self['lw'] < 0] = np.nan
         
         # surface downwelling shortwave radiation - W/m2
         # uncertainty ±5 W/m2 at 1000 W/m2
