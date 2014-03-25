@@ -261,6 +261,8 @@ class RFTimeSeries(HasTraits):
                                                                     self.plot_title, 
                                                                     'measurements', 'model')
         self.rfcontainer = plot
+        self.rfcontainer.value_range.set_bounds(0, 1000)
+        
         self.rfplotline = plotline1[0]
         self.clearskyplot = plotline2[0]
         self.clearskyplot.visible = self.show_clearsky
@@ -275,18 +277,20 @@ class RFTimeSeries(HasTraits):
         self.sadata.set_data('index', [])
         plot = self.init_time_series(self.sadata, 'Solar Angle', self.rfcontainer.index_range, 'darkred')
         self.sacontainer = plot
-        self.sacontainer.value_range.set_bounds(10, 180)
+        self.sacontainer.value_range.set_bounds(10, 90)
         
         self.tdata = chaco.ArrayPlotData()
         self.tdata.set_data('value', [])
         self.tdata.set_data('index', [])
         plot = self.init_time_series(self.tdata, 'Temperature [degC]', self.rfcontainer.index_range, 'darkblue')
         self.tcontainer = plot
+        self.tcontainer.value_range.set_bounds(-10, 40)
         
         self.data_to_plot = data_to_plot
         self.clearsky_name = clearsky_name
         
         if file_to_open is not None:
+            print 'trying to open directly ', file_to_open
             self.open_year(file_to_open)
             self.set_data_in_plot()
             
