@@ -59,8 +59,6 @@ class RFTimeSeries(HasTraits):
     
     show_clearsky = Bool(False)
     reset_zoom_button = Button('Reset Zoom')
-    open_sw_file_button = Button('Open SW Data File...')
-    open_lw_file_button = Button('Open LW Data File...')
     
     data_selector = Enum('sw', 'lw')
 
@@ -85,8 +83,6 @@ class RFTimeSeries(HasTraits):
             Menu(
                 CloseAction,
                 Separator(),
-                Action(name='Open SW data file...', action='open_sw_file'),
-                Action(name='Open LW data file...', action='open_lw_file'),
                 Action(name='Save Plot...', action='save_plot', enabled_when='plot_title != ""'),
                 name='File',
             ),
@@ -391,7 +387,7 @@ class RFController(Handler):
             
 
     def about(self, ui_info):
-        text = ['rfyear.py', 'VNoel 2011 CNRS', 'Radflux Day Time Series viewer', 'SIRTA']
+        text = ['rfyear.py', 'VNoel 2014 CNRS', 'Radflux Long Time Series viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
         dlg.open()
 

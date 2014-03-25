@@ -58,6 +58,7 @@ class sctd(dict):
         
         # surface downwelling longwave radiation - clear sky
         self['lw_cs'] = nc.variables['rldscs'][:]
+        self['lw_cs'][self['lw_cs'] < 0] = np.nan
         
         # Average near-surface(2m) air temperature
         self['temp'] = nc.variables['tas'][:]
