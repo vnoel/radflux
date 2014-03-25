@@ -17,7 +17,7 @@ from chaco.tools.api import ZoomTool, PanTool
 from pyface.api import OK, FileDialog, AboutDialog, MessageDialog
 
 from traits.api import HasTraits, Instance
-from traits.api import Bool, Str, Button
+from traits.api import Bool, Str, Button, Enum
 from traitsui.api import View, VGroup, HGroup, Item, UItem, Spring
 from traitsui.api import Handler
 from traitsui.menu import MenuBar, Menu, Action, CloseAction, Separator
@@ -26,8 +26,6 @@ from enable.api import ComponentEditor
 
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-
-from radflux_utils import radflux_year_read, meteo_year_read
 
 from sctd_sirta import sctd
 
@@ -49,7 +47,7 @@ class RFTimeSeries(HasTraits):
 
     window_title = 'RadFlux Year Time Series'
     plot_title = Str('')
-    basetitle = 'SIRTA RadFlux data - '
+    basetitle = 'SIRTA RadFlux data - ' 
     
     # needs to set those in the __init__ of the subclass
     data_to_plot = 'NA'
@@ -63,11 +61,14 @@ class RFTimeSeries(HasTraits):
     reset_zoom_button = Button('Reset Zoom')
     open_sw_file_button = Button('Open SW Data File...')
     open_lw_file_button = Button('Open LW Data File...')
+    
+    data_selector = Enum('sw', 'lw')
 
     traits_view = View(
         # this part of the view is only shown when plot_title is not ""
         # ie when there is data
         VGroup(
+            Item('data_selector', springy=True),
             UItem('rfcontainer', editor=ComponentEditor()),
             HGroup(
                 Item('show_clearsky', label='Show Clear-Sky Model'),
@@ -80,16 +81,6 @@ class RFTimeSeries(HasTraits):
             ),
             visible_when = 'plot_title != ""'
         ), 
-        # this part of the view is shown when there is no data
-        VGroup(
-            Spring(),
-            HGroup(
-                UItem('open_sw_file_button', padding=15, springy=True),
-                UItem('open_lw_file_button', padding=15, springy=True),
-            ),
-            Spring(),
-            visible_when='plot_title == ""',
-        ),
         menubar = MenuBar(
             Menu(
                 CloseAction,
@@ -133,9 +124,10 @@ class RFTimeSeries(HasTraits):
             return
     
         self.rfcontainer.index_range.set_bounds(self.data['time_num'][0], self.data['time_num'][-1])
-        idx = np.isfinite(self.data[self.data_to_plot])
-        value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
-        self.rfcontainer.value_range.set_bounds(*value_range)
+        # idx = np.isfinite(self.data[self.data_to_plot])
+        # value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
+        # self.rfcontainer.value_range.set_bounds(*value_range)
+        self.update_value_bounds()
     
     
     def _show_clearsky_changed(self):
@@ -147,6 +139,11 @@ class RFTimeSeries(HasTraits):
         self.clearskyplot.visible = self.show_clearsky
         self.rfcontainer.legend.visible = True
         self.rfcontainer.request_redraw()
+    
+    
+    def _data_selector_changed(self):
+        
+        self.set_main_data_plot()
     
     
     def open_year(self):
@@ -191,12 +188,22 @@ class RFTimeSeries(HasTraits):
         self.save_multipage_pdf(imagefile, [self.rfcontainer, self.sacontainer, self.tcontainer])
         
     
-    def set_data_in_plot(self):
+    def update_value_bounds(self):
+
+        idx = np.isfinite(self.data[self.data_to_plot])
+        value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
+        self.rfcontainer.value_range.set_bounds(*value_range)
+
+    
+    def set_main_data_plot(self):
         
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
             return
-            
-        self.plot_title = self.basetitle # + str(self.date.year)
+
+        self.data_to_plot = self.data_selector
+        self.clearsky_name = self.data_selector + '_cs'
+        
+        self.plot_title = self.basetitle + self.data_selector
         self.rfcontainer.y_axis.title = self.data_to_plot + ' (W/m2)'
         
         self.rfcontainer.title = self.plot_title
@@ -204,7 +211,18 @@ class RFTimeSeries(HasTraits):
         self.rfdata.set_data('value', self.data[self.data_to_plot])
         self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
         self.rfcontainer.index_mapper.domain_limits = (self.data['time_num'][0], self.data['time_num'][-1])
+
+        self.update_value_bounds()
+        
+        
     
+    def set_data_in_plot(self):
+        
+        if self.data is None or self.rfcontainer is None or self.rfdata is None:
+            return
+        
+        self.set_main_data_plot()
+                
         self.sadata.set_data('index', self.data['time_photometer_num'])
         self.sadata.set_data('value', self.data['solar_zenith_angle'])
         
@@ -248,7 +266,7 @@ class RFTimeSeries(HasTraits):
         return plot
 
 
-    def __init__(self, file_to_open='data/sctd_sirta_sansprofiles_lidars_beta_cc_20131031.nc', data_to_plot='NA', clearsky_name='NA'):
+    def __init__(self, file_to_open=None, data_to_plot='NA', clearsky_name='NA'):
 
         self.data = None
 
@@ -286,13 +304,13 @@ class RFTimeSeries(HasTraits):
         self.tcontainer = plot
         self.tcontainer.value_range.set_bounds(-10, 40)
         
-        self.data_to_plot = data_to_plot
-        self.clearsky_name = clearsky_name
-        
-        if file_to_open is not None:
-            print 'trying to open directly ', file_to_open
-            self.open_year(file_to_open)
-            self.set_data_in_plot()
+        file_to_open = 'data/sctd_sirta_sansprofiles_lidars_beta_cc_20131031.nc'
+        self.open_year()
+
+        # self.data_to_plot = self.data_selector
+        # self.clearsky_name = self.data_selector + '_cs'
+
+        self.set_data_in_plot()
             
 
 class SWRFTimeSeries(RFTimeSeries):
