@@ -134,7 +134,8 @@ class RFTimeSeries(HasTraits):
     
         self.rfcontainer.index_range.set_bounds(self.data['time_num'][0], self.data['time_num'][-1])
         idx = np.isfinite(self.data[self.data_to_plot])
-        self.rfcontainer.value_range.set_bounds(np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
+        value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
+        self.rfcontainer.value_range.set_bounds(*value_range)
     
     
     def _show_clearsky_changed(self):
@@ -247,7 +248,7 @@ class RFTimeSeries(HasTraits):
         return plot
 
 
-    def __init__(self, file_to_open=None, data_to_plot='NA', clearsky_name='NA'):
+    def __init__(self, file_to_open='data/sctd_sirta_sansprofiles_lidars_beta_cc_20131031.nc', data_to_plot='NA', clearsky_name='NA'):
 
         self.data = None
 
