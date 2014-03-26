@@ -101,24 +101,7 @@ class RFTimeSeries(HasTraits):
         title=window_title,
     )
     
-    
-    def _open_sw_file_button_fired(self):
         
-        if self.data is not None:
-            # this should never happen
-            return
-            
-        self.handler.open_sw_file(None)
-        
-    
-    def _open_lw_file_button_fired(self):
-        
-        if self.data is not None:
-            return
-            
-        self.handler.open_lw_file(None)
-        
-    
     def _reset_zoom_button_fired(self):
     
         if self.data is None:
@@ -374,33 +357,6 @@ class RFController(Handler):
         return None
 
         
-    def open_sw_file(self, ui_info):
-        
-        # swfile = self.open_file()
-        # if swfile is None:
-        #     return
-
-        # print 'Opening ' + 
-        self.view.open_year()
-        self.view.data_to_plot = 'sw'
-        self.view.clearsky_name = 'sw_cs'
-        self.view.diff_name = 'sw_diff'
-        self.view.set_data_in_plot()
-            
-            
-    def open_lw_file(self, ui_info):
-
-        # lwfile = self.open_file()
-        # if lwfile is None:
-        #     return
-
-        # print 'Opening ' + lwfile
-        self.view.open_year()
-        self.view.data_to_plot = 'lw'
-        self.view.clearsky_name = 'lw_cs'
-        self.view.diff_name = 'lw_diff'
-        self.view.set_data_in_plot()
-
 
     def save_plot(self, ui_info):
         
