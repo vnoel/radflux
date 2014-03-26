@@ -336,26 +336,6 @@ class RFController(Handler):
 
         self.view = info.object
         self.view.handler = self
-
-
-    def open_file(self):
-
-        wildcard = 'ASCII data files (*.txt)|*.txt|All files|*.*'
-        fd = FileDialog(action='open', 
-                        title='Open RadFlux Year Time Series', 
-                        wildcard=wildcard)
-        if fd.open() == OK:
-
-            basename = os.path.basename(fd.path)
-            if not (basename.endswith('.txt') and basename.startswith('radflux_')) or basename.startswith('radflux_1a'):
-                msg = MessageDialog(message='Not a valid year RadFlux file. Valid files follow the form radflux_YYYY.txt', severity='warning', title='invalid file')
-                msg.open()
-                return None
-
-            return fd.path
-        
-        return None
-
         
 
     def save_plot(self, ui_info):
