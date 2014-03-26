@@ -133,6 +133,7 @@ class RFTimeSeries(HasTraits):
         self.diffplot.visible = self.show_diff
         self.rfcontainer.legend.visible = True
         self.rfcontainer.request_redraw()
+        self.update_value_bounds()
     
     
     def _data_selector_changed(self):
@@ -144,8 +145,8 @@ class RFTimeSeries(HasTraits):
         
         # data = radflux_year_read(rf_file)
         data = sctd()
-        data['sw_diff'] = data['sw_cs'] - data['sw']
-        data['lw_diff'] = data['lw_cs'] - data['lw']
+        data['sw_diff'] = data['sw'] - data['sw_cs']
+        data['lw_diff'] = data['lw'] - data['lw_cs']
         self.data = data
         
         # if data is not None:
@@ -188,7 +189,11 @@ class RFTimeSeries(HasTraits):
     def update_value_bounds(self):
 
         idx = np.isfinite(self.data[self.data_to_plot])
-        value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
+        value_range = (np.min(self.data[self.data_to_plot][idx]) - 10, np.max(self.data[self.data_to_plot][idx]) + 10)
+        if self.show_diff:
+            idx = np.isfinite(self.data[self.diff_name])
+            value_range = (np.min([value_range[0], np.min(self.data[self.diff_name][idx])]) - 10, np.max([value_range[1], np.max(self.data[self.diff_name][idx])]) + 10)
+            print value_range
         self.rfcontainer.value_range.set_bounds(*value_range)
 
     
@@ -335,8 +340,7 @@ class RFController(Handler):
     def init(self, info):
 
         self.view = info.object
-        self.view.handler = self
-        
+        self.view.handler = self        
 
     def save_plot(self, ui_info):
         
@@ -348,7 +352,6 @@ class RFController(Handler):
         if fd.open() == OK:
             self.view.save_image(fd.path)
             
-
     def about(self, ui_info):
         text = ['rfyear.py', 'VNoel 2014 CNRS', 'Radflux Long Time Series viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
