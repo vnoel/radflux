@@ -60,15 +60,16 @@ class RFTimeSeries(HasTraits):
     show_clearsky = Bool(False)
     reset_zoom_button = Button('Reset Zoom')
     
+    # TODO : use a translator to convert data name to field name in netcdf file
     data_selector = Enum('sw', 'lw')
 
     traits_view = View(
         # this part of the view is only shown when plot_title is not ""
         # ie when there is data
         VGroup(
-            Item('data_selector', springy=True),
             UItem('rfcontainer', editor=ComponentEditor()),
             HGroup(
+                Item('data_selector'),
                 Item('show_clearsky', label='Show Clear-Sky Model'),
                 UItem('reset_zoom_button'),
                 padding=10
