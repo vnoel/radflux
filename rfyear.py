@@ -62,8 +62,7 @@ class RFTimeSeries(HasTraits):
     show_clearsky = Bool(False)
     show_diff = Bool(False)
     reset_zoom_button = Button('Reset Zoom')
-    open_sw_file_button = Button('Open SW Data File...')
-    open_lw_file_button = Button('Open LW Data File...')
+    open_file_button = Button('Open Year Data File...')
 
     traits_view = View(
         # this part of the view is only shown when plot_title is not ""
@@ -87,8 +86,7 @@ class RFTimeSeries(HasTraits):
         VGroup(
             Spring(),
             HGroup(
-                UItem('open_sw_file_button', padding=15, springy=True),
-                UItem('open_lw_file_button', padding=15, springy=True),
+                UItem('open_file_button', padding=15, springy=True),
             ),
             Spring(),
             visible_when='plot_title == ""',
@@ -97,8 +95,7 @@ class RFTimeSeries(HasTraits):
             Menu(
                 CloseAction,
                 Separator(),
-                Action(name='Open SW data file...', action='open_sw_file'),
-                Action(name='Open LW data file...', action='open_lw_file'),
+                Action(name='Open year data file...', action='open_file'),
                 Action(name='Save Plot...', action='save_plot', enabled_when='plot_title != ""'),
                 name='File',
             ),
@@ -111,20 +108,13 @@ class RFTimeSeries(HasTraits):
         title=window_title,
     )
     
-    def _open_sw_file_button_fired(self):
+    def _open_file_button_fired(self):
         
         if self.data is not None:
             # this should never happen
             return
             
-        self.handler.open_sw_file(None)
-        
-    def _open_lw_file_button_fired(self):
-        
-        if self.data is not None:
-            return
-            
-        self.handler.open_lw_file(None)
+        self.handler.open_file(None)
         
     def update_vertical_bounds(self):
 
@@ -354,8 +344,7 @@ class RFController(Handler):
         self.view = info.object
         self.view.handler = self
 
-
-    def open_file(self):
+    def file_selector(self):
 
         wildcard = 'ASCII data files (*.txt)|*.txt|All files|*.*'
         fd = FileDialog(action='open', 
@@ -372,35 +361,20 @@ class RFController(Handler):
             return fd.path
         
         return None
-
         
-    def open_sw_file(self, ui_info):
+    def open_file(self, ui_info):
         
-        swfile = self.open_file()
-        if swfile is None:
+        datafile = self.file_selector()
+        if datafile is None:
             return
 
-        print 'Opening ' + swfile
-        self.view.open_year(swfile)
+        print 'Opening ' + datafile
+        self.view.open_year(datafile)
+        # default to SW
         self.view.data_to_plot = 'total SW flux'
         self.view.clearsky_name = 'sw_clearsky'
         self.view.diff_name = 'sw_diff'
         self.view.set_data_in_plot()
-            
-            
-    def open_lw_file(self, ui_info):
-
-        lwfile = self.open_file()
-        if lwfile is None:
-            return
-
-        print 'Opening ' + lwfile
-        self.view.open_year(lwfile)
-        self.view.data_to_plot = 'LW flux'
-        self.view.clearsky_name = 'lw_clearsky'
-        self.view.diff_name = 'lw_diff'
-        self.view.set_data_in_plot()
-
 
     def save_plot(self, ui_info):
         
@@ -412,7 +386,6 @@ class RFController(Handler):
         if fd.open() == OK:
             self.view.save_image(fd.path)
             
-
     def about(self, ui_info):
         text = ['rfyear.py', 'VNoel 2011 CNRS', 'Radflux Day Time Series viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
