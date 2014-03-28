@@ -31,7 +31,7 @@ from sctd_sirta import sctd
 
 
 # TODO : use a translator to convert data name to field name in self.data
-data_translator = {'Shortwave Flux':'sw', 'Longwave Flux':'lw'}
+data_translator = {'Shortwave Flux':'rsds', 'Longwave Flux':'rlds'}
 
 
 def add_date_axis(plot):
@@ -100,7 +100,6 @@ class RFTimeSeries(HasTraits):
         resizable=True,
         title=window_title,
     )
-    
         
     def _reset_zoom_button_fired(self):
     
@@ -113,7 +112,6 @@ class RFTimeSeries(HasTraits):
         # value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
         # self.rfcontainer.value_range.set_bounds(*value_range)
         self.update_value_bounds()
-    
     
     def _show_clearsky_changed(self):
 
@@ -135,27 +133,42 @@ class RFTimeSeries(HasTraits):
         self.rfcontainer.request_redraw()
         self.update_value_bounds()
     
-    
     def _data_selector_changed(self):
         
         self.set_main_data_plot()
-    
-    
-    def open_year(self):
-        
-        # data = radflux_year_read(rf_file)
-        data = sctd()
-        data['sw_diff'] = data['sw'] - data['sw_cs']
-        data['lw_diff'] = data['lw'] - data['lw_cs']
-        self.data = data
-        
-        # if data is not None:
-            # self.time = data['time']
-            # self.date = data['date']
-            # self.data = data
-            # self.meteo = meteo_year_read(self.date.year, os.path.dirname(rf_file))
 
+    def read_data(self):
         
+        # data to read :
+
+        # rlds ( = lw)
+        # surface downwelling longwave radiation - W/m2
+        # uncertainty ±5 W/m2 at 1000 W/m2
+        # missing value -999.96
+
+        # rsds ( = sw)
+        # surface downwelling shortwave radiation - W/m2
+        # uncertainty ±5 W/m2 at 1000 W/m2
+        # missing value -999.96
+
+        # rsdscs ( = sw_cs)
+        # surface downwelling shortwave radiation - clear sky
+        
+        # rldscs ( = lw_cs)
+        # surface downwelling longwave radiation - clear sky
+        
+        # tas
+        # Average near-surface(2m) air temperature
+
+        # solar angle
+        # solar_zenith_angle    
+
+        data = sctd(variable_names=['rlds', 'rsds', 'rsdscs', 'rldscs', 'tas', 'solar_zenith_angle'])
+        data.temp_to_celsius()
+        data['rsdsdiff'] = data['rsds'] - data['rsdscs']
+        data['rldsdiff'] = data['rlds'] - data['rldscs']
+        self.data = data
+  
     def save_multipage_pdf(self, pdfname, plots_list):
         
         c = canvas.Canvas(pdfname)
@@ -178,14 +191,12 @@ class RFTimeSeries(HasTraits):
             os.unlink(filename)
             
         c.save()
-        
-        
+            
     def save_image(self, imagefile):
         
         print 'Save image ', imagefile
         self.save_multipage_pdf(imagefile, [self.rfcontainer, self.sacontainer, self.tcontainer])
-        
-    
+           
     def update_value_bounds(self):
 
         idx = np.isfinite(self.data[self.data_to_plot])
@@ -195,16 +206,15 @@ class RFTimeSeries(HasTraits):
             value_range = (np.min([value_range[0], np.min(self.data[self.diff_name][idx])]) - 10, np.max([value_range[1], np.max(self.data[self.diff_name][idx])]) + 10)
             print value_range
         self.rfcontainer.value_range.set_bounds(*value_range)
-
-    
+  
     def set_main_data_plot(self):
         
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
             return
 
         self.data_to_plot = data_translator[self.data_selector]
-        self.clearsky_name = self.data_to_plot + '_cs'
-        self.diff_name = self.data_to_plot + '_diff'
+        self.clearsky_name = self.data_to_plot + 'cs'
+        self.diff_name = self.data_to_plot + 'diff'
         
         self.plot_title = self.basetitle + self.data_selector
         self.rfcontainer.y_axis.title = self.data_to_plot + ' (W/m2)'
@@ -218,8 +228,6 @@ class RFTimeSeries(HasTraits):
 
         self.update_value_bounds()
         
-        
-    
     def set_data_in_plot(self):
         
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
@@ -231,11 +239,10 @@ class RFTimeSeries(HasTraits):
         self.sadata.set_data('value', self.data['solar_zenith_angle'])
         
         self.tdata.set_data('index', self.data['time_num'])
-        self.tdata.set_data('value', self.data['temp'])
+        self.tdata.set_data('value', self.data['tas'])
         
         self._reset_zoom_button_fired()
-    
-    
+        
     def init_triple_time_series(self, data, name1, name2, name3, title, label1, label2, label3):
         
         plot = chaco.Plot(data, name=title, width=300, height=100)
@@ -253,7 +260,6 @@ class RFTimeSeries(HasTraits):
         
         return plot, plotline1, plotline2, plotline3
         
-    
     def init_time_series(self, data, name, xrange, color):
         
         plot = chaco.Plot(data)
@@ -269,7 +275,6 @@ class RFTimeSeries(HasTraits):
         plot.padding_top = 10
 
         return plot
-
 
     def __init__(self, file_to_open=None, data_to_plot='NA', clearsky_name='NA'):
 
@@ -314,16 +319,12 @@ class RFTimeSeries(HasTraits):
         self.tcontainer.value_range.set_bounds(-10, 40)
         
         file_to_open = 'data/sctd_sirta_sansprofiles_lidars_beta_cc_20131031.nc'
-        self.open_year()
-
-        # self.data_to_plot = self.data_selector
-        # self.clearsky_name = self.data_selector + '_cs'
+        self.read_data()
 
         self.set_data_in_plot()
             
 
 class SWRFTimeSeries(RFTimeSeries):
-
 
     def __init__(self, file_to_open=None):
         
@@ -331,7 +332,6 @@ class SWRFTimeSeries(RFTimeSeries):
 
         self.window_title = 'SW RadFlux Year Time Series'
         
-
 
 class RFController(Handler):
 

@@ -4,10 +4,7 @@ VNoel 2012-2014
 
 Derive de fluxSW/fluxLW
 
-FIXME : load the sirta file on startup
 FIXME : what's wrong with the solar zenith angle ?
 
 possible improvements:
-TODO : find a way to switch from/to LW/SW
-TODO : find a way to show cloud radiative impact directly in both wl (clearsky-observed)
 TODO : find a way to show total cloud radiative impact ?
