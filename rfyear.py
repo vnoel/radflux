@@ -52,12 +52,14 @@ class RFTimeSeries(HasTraits):
     # needs to set those in the __init__ of the subclass
     data_to_plot = 'NA'
     clearsky_name = 'NA'
+    diff_name = 'NA'
     
     rfcontainer = Instance(chaco.Plot)
     sacontainer = Instance(chaco.Plot)
     tcontainer = Instance(chaco.Plot)
     
     show_clearsky = Bool(False)
+    show_diff = Bool(False)
     reset_zoom_button = Button('Reset Zoom')
     open_sw_file_button = Button('Open SW Data File...')
     open_lw_file_button = Button('Open LW Data File...')
@@ -69,6 +71,7 @@ class RFTimeSeries(HasTraits):
             UItem('rfcontainer', editor=ComponentEditor()),
             HGroup(
                 Item('show_clearsky', label='Show Clear-Sky Model'),
+                Item('show_diff', label='Show difference'),
                 UItem('reset_zoom_button'),
                 padding=10
             ),
@@ -106,7 +109,6 @@ class RFTimeSeries(HasTraits):
         title=window_title,
     )
     
-    
     def _open_sw_file_button_fired(self):
         
         if self.data is not None:
@@ -115,7 +117,6 @@ class RFTimeSeries(HasTraits):
             
         self.handler.open_sw_file(None)
         
-    
     def _open_lw_file_button_fired(self):
         
         if self.data is not None:
@@ -123,7 +124,22 @@ class RFTimeSeries(HasTraits):
             
         self.handler.open_lw_file(None)
         
-    
+    def update_vertical_bounds(self):
+
+        idx = np.isfinite(self.data[self.data_to_plot])
+        min1 = np.min(self.data[self.data_to_plot][idx]) - 50
+        if self.show_diff:
+            idx2 = np.isfinite(self.data[self.diff_name])
+            min2 = np.min(self.data[self.diff_name][idx2] - 50)
+            min1 = np.min([min1, min2])
+        max1 = np.max(self.data[self.data_to_plot][idx])
+        if self.show_diff:
+            idx2 = np.isfinite(self.data[self.diff_name])
+            max2 = np.max(self.data[self.diff_name][idx2] + 50)
+            max1 = np.max([max1, max2])
+        
+        self.rfcontainer.value_range.set_bounds(min1, max1)
+
     def _reset_zoom_button_fired(self):
     
         if self.data is None:
@@ -131,9 +147,7 @@ class RFTimeSeries(HasTraits):
             return
     
         self.rfcontainer.index_range.set_bounds(self.time[0], self.time[-1])
-        idx = np.isfinite(self.data[self.data_to_plot])
-        self.rfcontainer.value_range.set_bounds(np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
-    
+        self.update_vertical_bounds()
     
     def _show_clearsky_changed(self):
 
@@ -145,6 +159,15 @@ class RFTimeSeries(HasTraits):
         self.rfcontainer.legend.visible = True
         self.rfcontainer.request_redraw()
     
+    def _show_diff_changed(self):
+        
+        if self.data is None:
+            return
+            
+        self.diffplot.visible = self.show_diff
+        self.rfcontainer.legend.visible = True
+        self.update_vertical_bounds()
+        self.rfcontainer.request_redraw()
     
     def open_year(self, rf_file):
         
@@ -153,6 +176,8 @@ class RFTimeSeries(HasTraits):
             self.time = data['time']
             self.date = data['date']
             self.data = data
+            self.data['sw_diff'] = self.data['total SW flux'] - self.data['sw_clearsky']
+            self.data['lw_diff'] = self.data['LW flux'] - self.data['lw_clearsky']
             self.meteo = meteo_year_read(self.date.year, os.path.dirname(rf_file))
 
         
@@ -178,14 +203,12 @@ class RFTimeSeries(HasTraits):
             os.unlink(filename)
             
         c.save()
-        
-        
+           
     def save_image(self, imagefile):
         
         print 'Save image ', imagefile
         self.save_multipage_pdf(imagefile, [self.rfcontainer, self.sacontainer, self.tcontainer])
         
-    
     def set_data_in_plot(self):
         
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
@@ -198,6 +221,7 @@ class RFTimeSeries(HasTraits):
         self.rfdata.set_data('index', self.time)
         self.rfdata.set_data('value', self.data[self.data_to_plot])
         self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
+        self.rfdata.set_data('diff', self.data[self.diff_name])
         self.rfcontainer.index_mapper.domain_limits = (self.time[0], self.time[-1])
     
         self.sadata.set_data('index', self.time)
@@ -207,13 +231,13 @@ class RFTimeSeries(HasTraits):
         self.tdata.set_data('value', self.meteo['temperature'])
         
         self._reset_zoom_button_fired()
-    
-    
-    def init_double_time_series(self, data, name1, name2, title, label1, label2):
+ 
+    def init_triple_time_series(self, data, name1, name2, name3, title, label1, label2, label3):
         
         plot = chaco.Plot(data, name=title, width=300, height=100)
         plotline1 = plot.plot(('index', name1), name=label1)
         plotline2 = plot.plot(('index', name2), name=label2, visible=False, color='green', alpha=0.5)
+        plotline3 = plot.plot(('index', name3), name=label3, visible=False, color='red', alpha=0.5)
         chaco.add_default_grids(plot)
         plot.underlays.remove(plot.x_axis)
         add_date_axis(plot)
@@ -223,9 +247,8 @@ class RFTimeSeries(HasTraits):
         
         plot.padding_bottom = 25
         
-        return plot, plotline1, plotline2
+        return plot, plotline1, plotline2, plotline3
         
-    
     def init_time_series(self, data, name, xrange, color):
         
         plot = chaco.Plot(data)
@@ -241,9 +264,8 @@ class RFTimeSeries(HasTraits):
         plot.padding_top = 10
 
         return plot
-
-
-    def __init__(self, file_to_open=None, data_to_plot='NA', clearsky_name='NA'):
+        
+    def __init__(self, file_to_open=None, data_to_plot='NA', clearsky_name='NA', diff_name='NA'):
 
         self.data = None
 
@@ -251,14 +273,17 @@ class RFTimeSeries(HasTraits):
         self.rfdata.set_data('value', [])
         self.rfdata.set_data('index', [])
         self.rfdata.set_data('clearsky', [])
-        plot, plotline1, plotline2 = self.init_double_time_series(  self.rfdata, 
-                                                                    'value', 'clearsky', 
+        self.rfdata.set_data('diff', [])
+        plot, plotline1, plotline2, plotline3 = self.init_triple_time_series(  self.rfdata, 
+                                                                    'value', 'clearsky', 'diff',
                                                                     self.plot_title, 
-                                                                    'measurements', 'model')
+                                                                    'measurements', 'model', 'difference')
         self.rfcontainer = plot
         self.rfplotline = plotline1[0]
         self.clearskyplot = plotline2[0]
+        self.diffplot = plotline3[0]
         self.clearskyplot.visible = self.show_clearsky
+        self.diffplot.visible = self.show_diff
         
         self.rfcontainer.overlays.append(ZoomTool(self.rfcontainer, axis='index', tool_mode='range', 
                                                 drag_button='left', always_on=True, restrict_to_data=True))
@@ -280,6 +305,7 @@ class RFTimeSeries(HasTraits):
         
         self.data_to_plot = data_to_plot
         self.clearsky_name = clearsky_name
+        self.diff_name = diff_name
         
         if file_to_open is not None:
             self.open_year(file_to_open)
@@ -336,6 +362,7 @@ class RFController(Handler):
         self.view.open_year(swfile)
         self.view.data_to_plot = 'total SW flux'
         self.view.clearsky_name = 'sw_clearsky'
+        self.view.diff_name = 'sw_diff'
         self.view.set_data_in_plot()
             
             
@@ -349,6 +376,7 @@ class RFController(Handler):
         self.view.open_year(lwfile)
         self.view.data_to_plot = 'LW flux'
         self.view.clearsky_name = 'lw_clearsky'
+        self.view.diff_name = 'lw_diff'
         self.view.set_data_in_plot()
 
 
