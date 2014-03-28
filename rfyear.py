@@ -108,9 +108,6 @@ class RFTimeSeries(HasTraits):
             return
     
         self.rfcontainer.index_range.set_bounds(self.data['time_num'][0], self.data['time_num'][-1])
-        # idx = np.isfinite(self.data[self.data_to_plot])
-        # value_range = (np.min(self.data[self.data_to_plot][idx]) - 50, np.max(self.data[self.data_to_plot][idx]) + 50)
-        # self.rfcontainer.value_range.set_bounds(*value_range)
         self.update_value_bounds()
     
     def _show_clearsky_changed(self):
@@ -359,8 +356,6 @@ class RFController(Handler):
 
 
 def main():
-    
-    # rftimeseries = RFTimeSeries(file_to_open='data/radflux_1a_1min_v04_20100604_000000_1440.txt')
     rftimeseries = SWRFTimeSeries()
     controller = RFController(view=rftimeseries)
     rftimeseries.configure_traits(handler=controller)
