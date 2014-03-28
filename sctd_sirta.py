@@ -6,9 +6,6 @@ import netCDF4
 from datetime import datetime, timedelta
 import matplotlib.dates as mdates
 
-# TODO : load variables on demand
-# TODO : use in-file names for dict field names
-
 class sctd(dict):
     
     def constrain_period(self, start, end):

@@ -30,9 +30,7 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 from sctd_sirta import sctd
 
 
-# TODO : use a translator to convert data name to field name in self.data
 data_translator = {'Shortwave Flux':'rsds', 'Longwave Flux':'rlds'}
-
 
 def add_date_axis(plot):
     
