@@ -17,7 +17,7 @@ from chaco.tools.api import ZoomTool, PanTool
 from pyface.api import OK, FileDialog, AboutDialog, MessageDialog
 
 from traits.api import HasTraits, Instance
-from traits.api import Bool, Str, Button
+from traits.api import Bool, Str, Button, Enum
 from traitsui.api import View, VGroup, HGroup, Item, UItem, Spring
 from traitsui.api import Handler
 from traitsui.menu import MenuBar, Menu, Action, CloseAction, Separator
@@ -50,6 +50,7 @@ class RFTimeSeries(HasTraits):
     basetitle = 'SIRTA RadFlux data - '
     
     # needs to set those in the __init__ of the subclass
+    data_selector = Enum('total SW flux', 'LW flux')
     data_to_plot = 'NA'
     clearsky_name = 'NA'
     diff_name = 'NA'
@@ -70,6 +71,7 @@ class RFTimeSeries(HasTraits):
         VGroup(
             UItem('rfcontainer', editor=ComponentEditor()),
             HGroup(
+                Item('data_selector'),
                 Item('show_clearsky', label='Show Clear-Sky Model'),
                 Item('show_diff', label='Show difference'),
                 UItem('reset_zoom_button'),
@@ -149,6 +151,22 @@ class RFTimeSeries(HasTraits):
         self.rfcontainer.index_range.set_bounds(self.time[0], self.time[-1])
         self.update_vertical_bounds()
     
+    def _data_selector_changed(self):
+        
+        if self.data is None:
+            return
+            
+        self.data_to_plot = self.data_selector
+        if 'SW' in self.data_to_plot:
+            self.clearsky_name = 'sw_clearsky'
+            self.diff_name = 'sw_diff'
+        else:
+            self.clearsky_name = 'lw_clearsky'
+            self.diff_name = 'lw_diff'
+        self.set_main_data_in_plot()
+        self.update_vertical_bounds()
+        self.rfcontainer.request_redraw()
+    
     def _show_clearsky_changed(self):
 
         if self.data is None:
@@ -209,6 +227,12 @@ class RFTimeSeries(HasTraits):
         print 'Save image ', imagefile
         self.save_multipage_pdf(imagefile, [self.rfcontainer, self.sacontainer, self.tcontainer])
         
+    def set_main_data_in_plot(self):
+
+        self.rfdata.set_data('value', self.data[self.data_to_plot])
+        self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
+        self.rfdata.set_data('diff', self.data[self.diff_name])
+        
     def set_data_in_plot(self):
         
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
@@ -219,10 +243,8 @@ class RFTimeSeries(HasTraits):
         
         self.rfcontainer.title = self.plot_title
         self.rfdata.set_data('index', self.time)
-        self.rfdata.set_data('value', self.data[self.data_to_plot])
-        self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
-        self.rfdata.set_data('diff', self.data[self.diff_name])
         self.rfcontainer.index_mapper.domain_limits = (self.time[0], self.time[-1])
+        self.set_main_data_in_plot()
     
         self.sadata.set_data('index', self.time)
         self.sadata.set_data('value', self.data['solar angle'])

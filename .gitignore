@@ -1,3 +1,4 @@
+*pyc
 data/*.nc4
 data/*.nc
 *.pyc
