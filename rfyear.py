@@ -387,7 +387,7 @@ class RFController(Handler):
             self.view.save_image(fd.path)
             
     def about(self, ui_info):
-        text = ['rfyear.py', 'VNoel 2011 CNRS', 'Radflux Day Time Series viewer', 'SIRTA']
+        text = ['rfyear.py', 'VNoel 2011-2014 CNRS', 'Radflux Year Time Series viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
         dlg.open()
 
