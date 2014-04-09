@@ -8,7 +8,8 @@ Created by Vincent Noel - LMD/CNRS on 2011-11-08.
 
 import numpy as np
 
-import os, tempfile
+import os
+import tempfile
 from reportlab.pdfgen import canvas
 
 import chaco.api as chaco
@@ -80,7 +81,7 @@ class RFTimeSeries(HasTraits):
                 UItem('sacontainer', editor=ComponentEditor()),
                 UItem('tcontainer', editor=ComponentEditor()),
             ),
-            visible_when = 'plot_title != ""'
+            visible_when='plot_title != ""'
         ), 
         # this part of the view is shown when there is no data
         VGroup(
@@ -91,7 +92,7 @@ class RFTimeSeries(HasTraits):
             Spring(),
             visible_when='plot_title == ""',
         ),
-        menubar = MenuBar(
+        menubar=MenuBar(
             Menu(
                 CloseAction,
                 Separator(),
@@ -286,10 +287,10 @@ class RFTimeSeries(HasTraits):
         self.rfdata.set_data('index', [])
         self.rfdata.set_data('clearsky', [])
         self.rfdata.set_data('diff', [])
-        plot, plotline1, plotline2, plotline3 = self.init_triple_time_series(  self.rfdata, 
-                                                                    'value', 'clearsky', 'diff',
-                                                                    self.plot_title, 
-                                                                    'measurements', 'model', 'difference')
+        plot, plotline1, plotline2, plotline3 = self.init_triple_time_series(self.rfdata, 
+                                                                             'value', 'clearsky', 'diff',
+                                                                             self.plot_title, 
+                                                                             'measurements', 'model', 'difference')
         self.rfcontainer = plot
         self.rfplotline = plotline1[0]
         self.clearskyplot = plotline2[0]
@@ -300,7 +301,7 @@ class RFTimeSeries(HasTraits):
         self.rfcontainer.overlays.append(ZoomTool(self.rfcontainer, axis='index', tool_mode='range', 
                                                 drag_button='left', always_on=True, restrict_to_data=True))
         self.rfcontainer.tools.append(PanTool(self.rfcontainer, drag_button='right', 
-                                                constrain=True, constrain_direction='x', restrict_to_data=True))
+                                            constrain=True, constrain_direction='x', restrict_to_data=True))
         
         self.sadata = chaco.ArrayPlotData()
         self.sadata.set_data('value', [])
