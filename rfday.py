@@ -8,7 +8,8 @@ Created by Vincent Noel - LMD/CNRS on 2011-11-08.
 
 import numpy as np
 
-import os, tempfile
+import os
+import tempfile
 from reportlab.pdfgen import canvas
 
 import chaco.api as chaco
@@ -16,10 +17,8 @@ from chaco.tools.api import ZoomTool, PanTool
 
 from pyface.api import OK, FileDialog, AboutDialog, MessageDialog
 
-from traits.api import HasTraits, Instance
-from traits.api import Bool, Str, Button
-from traitsui.api import View, VGroup, HGroup, Item, UItem, Spring
-from traitsui.api import Handler
+from traits.api import HasTraits, Instance, Enum, Bool, Str, Button
+from traitsui.api import View, VGroup, HGroup, Item, UItem, Spring, Handler
 from traitsui.menu import MenuBar, Menu, Action, CloseAction, Separator
 
 from enable.api import ComponentEditor
@@ -42,6 +41,7 @@ class RFTimeSeries(HasTraits):
     window_title = 'RadFlux Daily Time Series'
     plot_title = Str('')
     
+    data_selector = Enum('total SW flux', 'LW flux')
     data_to_plot = 'NA'
     clearsky_name = 'NA'
     
@@ -51,8 +51,7 @@ class RFTimeSeries(HasTraits):
     
     show_clearsky = Bool(False)
     reset_zoom_button = Button('Reset Zoom')
-    open_sw_file_button = Button('Open SW Data File...')
-    open_lw_file_button = Button('Open LW Data File...')
+    open_file_button = Button('Open Daily Data File...')
 
     traits_view = View(
         VGroup(
@@ -60,6 +59,7 @@ class RFTimeSeries(HasTraits):
             # ie when there is data        
             UItem('rfcontainer', editor=ComponentEditor()),
             HGroup(
+                Item('data_selector'),
                 Item('show_clearsky', label='Show Clear-Sky Model'),
                 UItem('reset_zoom_button'),
                 padding=10
@@ -68,25 +68,23 @@ class RFTimeSeries(HasTraits):
                 UItem('sacontainer', editor=ComponentEditor()),
                 UItem('tcontainer', editor=ComponentEditor()),
             ),
-            visible_when = 'plot_title != ""'
+            visible_when='plot_title != ""'
         ), 
         # this part of the view is shown when there is no data
         VGroup(
             Spring(),
             HGroup(
-                UItem('open_sw_file_button', padding=15, springy=True),
-                UItem('open_lw_file_button', padding=15, springy=True),
+                UItem('open_file_button', padding=15, springy=True),
             ),
             Spring(),
             visible_when='plot_title == ""',
             springy=True
         ),
-        menubar = MenuBar(
+        menubar=MenuBar(
             Menu(
                 CloseAction,
                 Separator(),
-                Action(name='Open SW data file...', action='open_sw_file'),
-                Action(name='Open LW data file...', action='open_lw_file'),
+                Action(name='Open daily data file...', action='open_file'),
                 Action(name='Save Plot...', action='save_plot', enabled_when='plot_title != ""'),
                 name='File',
             ),
@@ -99,23 +97,14 @@ class RFTimeSeries(HasTraits):
         title=window_title,
     )
     
-    
-    def _open_sw_file_button_fired(self):
+    def _open_file_button_fired(self):
         
         if self.data is not None:
             # this should never happen
             return
             
-        self.handler.open_sw_file(None)
-        
+        self.handler.open_file(None)        
     
-    def _open_lw_file_button_fired(self):
-        
-        if self.data is not None:
-            return
-        self.handler.open_lw_file(None)
-        
-        
     def _reset_zoom_button_fired(self):
     
         if self.data is None:
@@ -138,9 +127,29 @@ class RFTimeSeries(HasTraits):
             max = daymax
             min = daymin
             
-        self.rfcontainer.value_range.set_bounds(min - 5, max + 5)
+        self.rfcontainer.value_range.set_bounds(min - 5, max + 5)    
     
+    def update_vertical_bounds(self):
+        
+        idx = np.isfinite(self.data[self.data_to_plot])
+        min1 = np.min(self.data[self.data_to_plot][idx]) - 50
+        max1 = np.max(self.data[self.data_to_plot][idx])        
+        self.rfcontainer.value_range.set_bounds(min1, max1)
     
+    def _data_selector_changed(self):
+        
+        if self.data is None:
+            return
+            
+        self.data_to_plot = self.data_selector
+        if 'SW' in self.data_to_plot:
+            self.clearsky_name = 'sw_clearsky'
+        else:
+            self.clearsky_name = 'lw_clearsky'
+        self.set_main_data_in_plot()
+        self.update_vertical_bounds()
+        self.rfcontainer.request_redraw()
+
     def _show_clearsky_changed(self):
 
         if self.data is None:
@@ -150,7 +159,6 @@ class RFTimeSeries(HasTraits):
         self.clearskyplot.visible = self.show_clearsky
         self.rfcontainer.legend.visible = True
         self.rfcontainer.request_redraw()
-    
     
     def open_day(self, rf_file):
         
@@ -163,8 +171,7 @@ class RFTimeSeries(HasTraits):
             self.meteo = meteo_read(self.date, os.path.dirname(rf_file))
             self.data['sw_clearsky'] = sw_clearsky(self.data['solar angle'])
             self.data['lw_clearsky'] = lw_clearsky(self.meteo['temperature'], self.meteo['rh'])
-        
-        
+            
     def save_multipage_pdf(self, pdfname, plots_list):
         
         c = canvas.Canvas(pdfname)
@@ -188,13 +195,18 @@ class RFTimeSeries(HasTraits):
             
         c.save()
         
-        
     def save_image(self, imagefile):
         
         print 'Save image ', imagefile
         self.save_multipage_pdf(imagefile, [self.rfcontainer, self.sacontainer, self.tcontainer])
         
-    
+    def set_main_data_in_plot(self):
+        
+        self.rfcontainer.y_axis.title = self.data_to_plot + ' (W/m2)'
+        self.rfdata.set_data('value', self.data[self.data_to_plot])
+        self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
+        
+        
     def set_data_in_plot(self):
         
         if self.data is None or self.rfcontainer is None or self.rfdata is None:
@@ -203,11 +215,10 @@ class RFTimeSeries(HasTraits):
         self.plot_title = 'SIRTA RadFlux data - ' + str(self.date.date())
 
         self.rfcontainer.title = self.plot_title
-        self.rfcontainer.y_axis.title = self.data_to_plot + ' (W/m2)'
         
         self.rfdata.set_data('index', self.time)
-        self.rfdata.set_data('value', self.data[self.data_to_plot])
-        self.rfdata.set_data('clearsky', self.data[self.clearsky_name])
+        self.set_main_data_in_plot()
+        
         self.rfcontainer.index_mapper.domain_limits = (self.time[0], self.time[-1])
     
         self.sadata.set_data('index', self.time)
@@ -218,7 +229,6 @@ class RFTimeSeries(HasTraits):
         
         self._reset_zoom_button_fired()
             
-    
     def init_double_time_series(self, data, name1, name2, title, label1, label2):
         
         plot = chaco.Plot(data, name=title, width=300, height=100)
@@ -235,7 +245,6 @@ class RFTimeSeries(HasTraits):
         
         return plot, plotline1, plotline2
         
-    
     def init_time_series(self, data, name, xrange, color):
         
         plot = chaco.Plot(data)
@@ -252,7 +261,6 @@ class RFTimeSeries(HasTraits):
 
         return plot
 
-
     def __init__(self, file_to_open=None):
 
         self.data = None
@@ -261,10 +269,10 @@ class RFTimeSeries(HasTraits):
         self.rfdata.set_data('value', [])
         self.rfdata.set_data('index', [])
         self.rfdata.set_data('clearsky', [])
-        plot, plotline1, plotline2 = self.init_double_time_series(  self.rfdata, 
-                                                                    'value', 'clearsky', 
-                                                                    self.plot_title, 
-                                                                    'measurements', 'model')
+        plot, plotline1, plotline2 = self.init_double_time_series(self.rfdata, 
+                                                                  'value', 'clearsky', 
+                                                                  self.plot_title, 
+                                                                  'measurements', 'model')
         self.rfcontainer = plot
         self.rfplotline = plotline1[0]
         self.clearskyplot = plotline2[0]
@@ -302,7 +310,7 @@ class RFController(Handler):
         self.view.handler = self
 
 
-    def open_file(self):
+    def file_selector(self):
 
         wildcard = 'ASCII data files (*.txt)|*.txt|All files|*.*'
         fd = FileDialog(action='open', 
@@ -321,28 +329,18 @@ class RFController(Handler):
         return None
 
             
-    def open_sw_file(self, ui_info):
+    def open_file(self, ui_info):
             
-        swfile = self.open_file()
-        if swfile is None:
+        datafile = self.file_selector()
+        if datafile is None:
             return
             
-        self.view.open_day(swfile)
+        self.view.open_day(datafile)
+        # default to SW
         self.view.data_to_plot = 'total SW flux'
         self.view.clearsky_name = 'sw_clearsky'
         self.view.set_data_in_plot()
         
-        
-    def open_lw_file(self, ui_info):
-        
-        lwfile = self.open_file()
-        if lwfile is None:
-            return
-            
-        self.view.open_day(lwfile)
-        self.view.data_to_plot = 'LW flux'
-        self.view.clearsky_name = 'lw_clearsky'
-        self.view.set_data_in_plot()
         
     def save_plot(self, ui_info):
         
@@ -356,7 +354,7 @@ class RFController(Handler):
             
 
     def about(self, ui_info):
-        text = ['rfday.py', 'VNoel 2011 CNRS', 'Radflux Day Time Series viewer', 'SIRTA']
+        text = ['rfday.py', 'VNoel 2011-2014 CNRS', 'Radflux Day Time Series viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
         dlg.open()
 
