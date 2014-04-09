@@ -28,8 +28,7 @@ from enable.api import ComponentEditor
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 
-from radflux_utils import radflux_year_read, meteo_year_read
-
+from radflux_utils import radflux_year_read, meteo_year_read, radflux_read, meteo_read, sw_clearsky, lw_clearsky
 
 def add_date_axis(plot):
     
@@ -188,7 +187,21 @@ class RFTimeSeries(HasTraits):
             self.data['sw_diff'] = self.data['total SW flux'] - self.data['sw_clearsky']
             self.data['lw_diff'] = self.data['LW flux'] - self.data['lw_clearsky']
             self.meteo = meteo_year_read(self.date.year, os.path.dirname(rf_file))
-
+            
+    def open_day(self, rf_file):
+        
+        time, data, date = radflux_read(rf_file)
+        if data is not None:
+            self.time = time
+            self.data = data
+            self.date = date
+            
+            self.meteo = meteo_read(self.date, os.path.dirname(rf_file))
+            self.meteo['epochtime'] = self.meteo['time']
+            self.data['sw_clearsky'] = sw_clearsky(self.data['solar angle'])
+            self.data['lw_clearsky'] = lw_clearsky(self.meteo['temperature'], self.meteo['rh'])
+            self.data['sw_diff'] = self.data['total SW flux'] - self.data['sw_clearsky']
+            self.data['lw_diff'] = self.data['LW flux'] - self.data['lw_clearsky']
         
     def save_multipage_pdf(self, pdfname, plots_list):
         
@@ -354,7 +367,7 @@ class RFController(Handler):
         if fd.open() == OK:
 
             basename = os.path.basename(fd.path)
-            if not (basename.endswith('.txt') and basename.startswith('radflux_')) or basename.startswith('radflux_1a'):
+            if not (basename.endswith('.txt') and basename.startswith('radflux_')):
                 msg = MessageDialog(message='Not a valid year RadFlux file. Valid files follow the form radflux_YYYY.txt', severity='warning', title='invalid file')
                 msg.open()
                 return None
@@ -370,7 +383,10 @@ class RFController(Handler):
             return
 
         print 'Opening ' + datafile
-        self.view.open_year(datafile)
+        if os.path.basename(datafile).startswith('radflux_1a'):
+            self.view.open_day(datafile)
+        else:
+            self.view.open_year(datafile)
         # default to SW
         self.view.data_to_plot = 'total SW flux'
         self.view.clearsky_name = 'sw_clearsky'
