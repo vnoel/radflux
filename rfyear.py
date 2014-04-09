@@ -395,7 +395,6 @@ class RFController(Handler):
 
 def main():
     
-    # rftimeseries = RFTimeSeries(file_to_open='data/radflux_1a_1min_v04_20100604_000000_1440.txt')
     rftimeseries = SWRFTimeSeries()
     controller = RFController(view=rftimeseries)
     rftimeseries.configure_traits(handler=controller)
