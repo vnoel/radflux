@@ -95,7 +95,6 @@ class RFMaps(HasTraits):
         self.update_period()
         self.set_data_in_plot()
     
-    
     def update_period(self):
 
         y = self.show_year
@@ -109,31 +108,26 @@ class RFMaps(HasTraits):
         self.tstart = np.min(months_idx)
         self.tend = np.max(months_idx) + 1
                 
-    
     def _data_selector_changed(self):
 
         self.update_plot()
     
-    
     def _show_year_changed(self):
 
         self.update_plot()
-        
-        
+            
     def _month_start_changed(self):
 
         if (self.month_start + self.nmonth) > 13:
             self.nmonth = 13 - self.month_start
         self.update_plot()
         
-    
     def _nmonth_changed(self):
 
         if (self.month_start + self.nmonth) > 13:
             self.month_start = 13 - self.nmonth
         self.update_plot()
         
-    
     def _open_file_button_fired(self):
         
         if self.data is not None:
@@ -142,7 +136,6 @@ class RFMaps(HasTraits):
             
         self.handler.open_file(None)
         
-    
     def set_data_from_file(self, filedata):
 
         self.time = filedata['time']
@@ -161,7 +154,6 @@ class RFMaps(HasTraits):
                     
         self.update_period()
                 
-        
     def open_ceres_data(self, rf_file):
         
         filedata = ceres_nc_read(rf_file)
@@ -169,7 +161,6 @@ class RFMaps(HasTraits):
             self.coastlon, self.coastlat = coastlines_read(os.path.dirname(rf_file))
             self.set_data_from_file(filedata)
                 
-        
     def save_image(self, imagefile):
 
         print 'saving ', imagefile
@@ -178,7 +169,6 @@ class RFMaps(HasTraits):
         gc.render_component(self.map_container)
         gc.save(imagefile)
         
-    
     def set_data_in_plot(self):
         
         if self.data is None or self.map_container is None:
@@ -211,8 +201,6 @@ class RFMaps(HasTraits):
         else:
             self.map_img.color_mapper = chaco.jet(self.map_img.color_mapper.range)
             
-
-    
     def init_map(self, arrayplotdata):
         
         map_plot = chaco.Plot(arrayplotdata, padding=40)
@@ -234,13 +222,11 @@ class RFMaps(HasTraits):
         
         return map_container, map_plot, map_img, map_colorbar
         
-
     def init_coastlines_on_map(self, map_plot):
         
         coastlines_plot = map_plot.plot(('coastlon', 'coastlat'), type='scatter', marker_size=0.1)
         return coastlines_plot
         
-
     def __init__(self, file_to_open=None):
 
         self.data = None
@@ -274,7 +260,6 @@ class RFController(Handler):
         self.view = info.object
         self.view.handler = self
 
-
     def open_file(self, ui_info):
 
         wildcard = 'NetCDF (*.nc4)|*.nc4|All files|*.*'
@@ -292,8 +277,7 @@ class RFController(Handler):
             print 'Opening ' + fd.path
             self.view.open_ceres_data(fd.path)
             self.view.update_plot()
-            
-            
+             
     def save_plot(self, ui_info):
         
         wildcard = 'PNG Figure files (*.png)|*.png|All files|*.*'
@@ -304,9 +288,8 @@ class RFController(Handler):
         if fd.open() == OK:
             self.view.save_image(fd.path)
             
-
     def about(self, ui_info):
-        text = ['rfspace.py', 'VNoel 2011 CNRS', 'Radflux Day Time Series viewer', 'SIRTA']
+        text = ['rfspace.py', 'VNoel 2011-2014 CNRS', 'CERES EBAF-TOA map viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
         dlg.open()
 
