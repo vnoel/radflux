@@ -164,7 +164,7 @@ class RFMaps(HasTraits):
         self.update_period()
                 
         
-    def open_day(self, rf_file):
+    def open_ceres_data(self, rf_file):
         
         filedata = ceres_nc_read(rf_file)
         if filedata is not None:
@@ -263,7 +263,7 @@ class RFMaps(HasTraits):
         self.coastlines_plot = coastlines_plot
                 
         if file_to_open is not None:
-            self.open_day(file_to_open)
+            self.open_ceres_data(file_to_open)
             self.update_plot()
             
 
@@ -292,7 +292,7 @@ class RFController(Handler):
                 return
 
             print 'Opening ' + fd.path
-            self.view.open_day(fd.path)
+            self.view.open_ceres_data(fd.path)
             self.view.update_plot()
             
             
