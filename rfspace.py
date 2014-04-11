@@ -33,7 +33,7 @@ class RFMaps(HasTraits):
     month_start = Int(1)
     month_start = Range(value=1, low=1, high=12)
     nmonth = Range(value=3, low=1, high=12)
-    show_year = Enum((2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010))
+    show_year = Enum((2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012))
     data_selector = Enum('Shortwave Upgoing Radiation Flux (measurements)', 
                          'Shortwave Clear-Sky Upgoing Radiation Flux (model)', 
                          'Shortwave, measurements - model',
@@ -262,15 +262,15 @@ class RFController(Handler):
 
     def open_file(self, ui_info):
 
-        wildcard = 'NetCDF (*.nc4)|*.nc4|All files|*.*'
+        wildcard = 'NetCDF (*.nc)|*.nc?|All files|*.*'
         fd = FileDialog(action='open', 
                         title='Open RadFlux Daily Time Series', 
                         wildcard=wildcard)
         if fd.open() == OK:
 
             basename = os.path.basename(fd.path)
-            if not (basename.endswith('.nc4') and basename.startswith('CERES')):
-                msg = MessageDialog(message='Not a valid CERES file. Valid files follow the form CERES*.nc4', severity='warning', title='invalid file')
+            if not (basename.endswith('.nc') and basename.startswith('CERES')):
+                msg = MessageDialog(message='Not a valid CERES file. Valid files follow the form CERES*.nc?', severity='warning', title='invalid file')
                 msg.open()
                 return
 
