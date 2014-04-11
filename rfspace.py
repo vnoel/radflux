@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-rfspace2.py
-
-beta version
+rfspace.py
 
 Created by Vincent Noel - LMD/CNRS on 2011-11-10.
 """
@@ -59,13 +57,13 @@ class RFMaps(HasTraits):
                 padding=5
             ),
             HGroup(
-            UItem('map_container', editor=ComponentEditor(), width=800, height=300),
+                UItem('map_container', editor=ComponentEditor(), width=800, height=300),
             ),
             # Item('yearlist'),
             Item('month_start', label='Start Month'),
             Item('nmonth', label='Number of averaged months'),
             padding=5,
-            visible_when = 'plot_title != ""'
+            visible_when='plot_title != ""'
         ), 
         # this part of the view is shown when there is no data
         VGroup(
@@ -75,7 +73,7 @@ class RFMaps(HasTraits):
             visible_when='plot_title == ""',
             springy=True
         ),
-        menubar = MenuBar(
+        menubar=MenuBar(
             Menu(
                 CloseAction,
                 Separator(),
@@ -152,14 +150,14 @@ class RFMaps(HasTraits):
         self.lon = filedata['lon']
         self.lat = filedata['lat']
         
-        self.data = {   'Shortwave Upgoing Radiation Flux (measurements)':filedata['swup'], 
-                        'Shortwave Clear-Sky Upgoing Radiation Flux (model)':filedata['swupclr'],
-                        'Shortwave, measurements - model':filedata['swup'] - filedata['swupclr'],
-                        'Longwave Upgoing Radiation Flux (measurements)':filedata['lwup'],
-                        'Longwave Clear-Sky Upgoing Radiation Flux (model)':filedata['lwupclr'],
-                        'Longwave, measurements - model':filedata['lwup'] - filedata['lwupclr'],
-                        'Cloud Radiative Impact (LW difference + SW difference)': filedata['swup'] - filedata['swupclr'] + filedata['lwup'] - filedata['lwupclr'],
-                    }
+        self.data = {'Shortwave Upgoing Radiation Flux (measurements)':filedata['swup'], 
+                     'Shortwave Clear-Sky Upgoing Radiation Flux (model)':filedata['swupclr'],
+                     'Shortwave, measurements - model':filedata['swup'] - filedata['swupclr'],
+                     'Longwave Upgoing Radiation Flux (measurements)':filedata['lwup'],
+                     'Longwave Clear-Sky Upgoing Radiation Flux (model)':filedata['lwupclr'],
+                     'Longwave, measurements - model':filedata['lwup'] - filedata['lwupclr'],
+                     'Cloud Radiative Impact (LW difference + SW difference)': filedata['swup'] - filedata['swupclr'] + filedata['lwup'] - filedata['lwupclr'],
+                     }
                     
         self.update_period()
                 
