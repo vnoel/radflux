@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-radflux_sw_year.py
+rfts.py
 
 Created by Vincent Noel - LMD/CNRS on 2011-11-08.
 """
@@ -45,7 +45,7 @@ class RFTimeSeries(HasTraits):
     will not plot stuff by itself
     '''
 
-    window_title = 'RadFlux Year Time Series'
+    window_title = 'RadFlux Time Series'
     plot_title = Str('')
     basetitle = 'SIRTA RadFlux data - '
     
@@ -62,7 +62,7 @@ class RFTimeSeries(HasTraits):
     show_clearsky = Bool(False)
     show_diff = Bool(False)
     reset_zoom_button = Button('Reset Zoom')
-    open_file_button = Button('Open Year Data File...')
+    open_file_button = Button('Open Data File...')
 
     traits_view = View(
         # this part of the view is only shown when plot_title is not ""
@@ -95,7 +95,7 @@ class RFTimeSeries(HasTraits):
             Menu(
                 CloseAction,
                 Separator(),
-                Action(name='Open year data file...', action='open_file'),
+                Action(name='Open data file...', action='open_file'),
                 Action(name='Save Plot...', action='save_plot', enabled_when='plot_title != ""'),
                 name='File',
             ),
@@ -345,7 +345,7 @@ class SWRFTimeSeries(RFTimeSeries):
         
         RFTimeSeries.__init__(self, file_to_open=file_to_open)
 
-        self.window_title = 'SW RadFlux Year Time Series'
+        self.window_title = 'SW RadFlux Time Series'
         
 
 
@@ -362,13 +362,13 @@ class RFController(Handler):
 
         wildcard = 'ASCII data files (*.txt)|*.txt|All files|*.*'
         fd = FileDialog(action='open', 
-                        title='Open RadFlux Year Time Series', 
+                        title='Open RadFlux Time Series', 
                         wildcard=wildcard)
         if fd.open() == OK:
 
             basename = os.path.basename(fd.path)
             if not (basename.endswith('.txt') and basename.startswith('radflux_')):
-                msg = MessageDialog(message='Not a valid year RadFlux file. Valid files follow the form radflux_YYYY.txt', severity='warning', title='invalid file')
+                msg = MessageDialog(message='Not a valid RadFlux file. Valid files follow the form radflux_YYYY.txt', severity='warning', title='invalid file')
                 msg.open()
                 return None
 
@@ -404,7 +404,7 @@ class RFController(Handler):
             self.view.save_image(fd.path)
             
     def about(self, ui_info):
-        text = ['rfyear.py', 'VNoel 2011-2014 CNRS', 'Radflux Year Time Series viewer', 'SIRTA']
+        text = ['rfts.py', 'VNoel 2011-2014 CNRS', 'Radflux Time Series viewer', 'SIRTA']
         dlg = AboutDialog(parent=ui_info.ui.control, additions=text)
         dlg.open()
 
