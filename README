@@ -1,2 +1,19 @@
 Python code used for Radiative Flux TP
 VNoel 2012-2014
+
+data/
+	radiometric data (LW/SW/solar angle) and meteorological data (temperature) needed by rfts script should go there.
+    The repository already contains sample datasets for this application
+    for day data :
+        e.g. radflux_1a_1min_v04_20100604_000000_1440.txt for LW/SW data
+        e.g. meteoz1_1a_1min_v03_20100604_000000_1440.asc for meteo data
+        these files were obtained from the SIRTA database
+    for year data :
+        e.g. radflux_2007.txt for LW/SW data
+    	e.g. MeteoZ1_SIRTA_Z1_1hour2007.txt for meteo data
+    	the rfyear data files were produced specifically for this code. They will be replaced in the future by SIRTA reanalyses data.
+
+	CERES EBAF-TOA data needed by rfspace script should go there.
+        These data are quite large and cannot be included in the repository, they should be installed manually if not present.
+    	e.g. CERES_EBAF-TOA_Ed2.8_Subset_200301-201212.nc   
+    	CERES EBAF-TOA data can be obtained from http://ceres.larc.nasa.gov/order_data.php
