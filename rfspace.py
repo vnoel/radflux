@@ -14,7 +14,7 @@ import chaco.api as chaco
 
 from pyface.api import OK, FileDialog, AboutDialog, MessageDialog
 
-from traits.api import HasTraits, Instance
+from traits.api import HasTraits, Instance, List
 from traits.api import Str, Button, Int, Enum, Range
 from traitsui.api import View, HGroup, VGroup, UItem, Item, Spring
 from traitsui.api import Handler
@@ -32,7 +32,8 @@ class RFMaps(HasTraits):
     month_start = Int(1)
     month_start = Range(value=1, low=1, high=12)
     nmonth = Range(value=3, low=1, high=12)
-    show_year = Enum((2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012))
+    year_list = List([])
+    show_year = Enum(values='year_list')
     data_selector = Enum('Shortwave Upgoing Radiation Flux (measurements)', 
                          'Shortwave Clear-Sky Upgoing Radiation Flux (model)', 
                          'Shortwave, measurements - model',
@@ -151,6 +152,7 @@ class RFMaps(HasTraits):
                      'Cloud Radiative Impact (LW difference + SW difference)': filedata['swup'] - filedata['swupclr'] + filedata['lwup'] - filedata['lwupclr'],
                      }
                     
+        self.year_list = filedata['years']
         self.update_period()
                 
     def open_ceres_data(self, rf_file):

@@ -85,7 +85,14 @@ def ceres_nc_read(ceresfile):
     
     dates = np.array([datetime(2000,3,1) + timedelta(days=int(i)) for i in time])
     
-    data = {'time':time, 'lon':lon, 'lat':lat, 'swup':swup, 'lwup':lwup, 'swupclr':swupclr, 'lwupclr':lwupclr, 'dates':dates}
+    lastyear = None
+    years = []
+    for d in dates:
+        if d.year != lastyear:
+            years.append(d.year)
+            lastyear = d.year
+    
+    data = {'time':time, 'lon':lon, 'lat':lat, 'swup':swup, 'lwup':lwup, 'swupclr':swupclr, 'lwupclr':lwupclr, 'dates':dates, 'years':years}
     return data
     
 
