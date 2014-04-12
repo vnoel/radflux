@@ -17,10 +17,8 @@ from chaco.tools.api import ZoomTool, PanTool
 
 from pyface.api import OK, FileDialog, AboutDialog, MessageDialog
 
-from traits.api import HasTraits, Instance
-from traits.api import Bool, Str, Button, Enum
-from traitsui.api import View, VGroup, HGroup, Item, UItem, Spring
-from traitsui.api import Handler
+from traits.api import HasTraits, Instance, Bool, Str, Button, Enum
+from traitsui.api import View, VGroup, HGroup, Item, UItem, Spring, Handler
 from traitsui.menu import MenuBar, Menu, Action, CloseAction, Separator
 
 from enable.api import ComponentEditor

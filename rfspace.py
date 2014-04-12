@@ -25,7 +25,6 @@ from enable.api import ComponentEditor
 from radflux_utils import ceres_nc_read, coastlines_read
 
 
-
 class RFMaps(HasTraits):
 
     window_title = 'RadFlux Space Maps'
