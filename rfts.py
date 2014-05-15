@@ -198,6 +198,12 @@ class RFTimeSeries(HasTraits):
             self.meteo['epochtime'] = self.meteo['time']
             self.data['sw_clearsky'] = sw_clearsky(self.data['solar angle'])
             self.data['lw_clearsky'] = lw_clearsky(self.meteo['temperature'], self.meteo['rh'])
+            
+            if len(self.time) < len(self.data['lw_clearsky']):
+                n = len(self.time)
+                self.data['lw_clearsky'] = self.data['lw_clearsky'][0:n]
+                self.data['sw_clearsky'] = self.data['sw_clearsky'][0:n]
+            
             self.data['sw_diff'] = self.data['total SW flux'] - self.data['sw_clearsky']
             self.data['lw_diff'] = self.data['LW flux'] - self.data['lw_clearsky']
         
@@ -358,7 +364,7 @@ class RFController(Handler):
 
     def file_selector(self):
 
-        wildcard = 'ASCII data files (*.txt)|*.txt|All files|*.*'
+        wildcard = 'ASCII data files (radflux_*.txt)|*.txt|All files|*.*'
         fd = FileDialog(action='open', 
                         title='Open RadFlux Time Series', 
                         wildcard=wildcard)
