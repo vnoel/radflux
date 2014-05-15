@@ -35,10 +35,10 @@ class RFMaps(HasTraits):
     show_year = Enum((2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012))
     data_selector = Enum('Shortwave Upgoing Radiation Flux (measurements)', 
                          'Shortwave Clear-Sky Upgoing Radiation Flux (model)', 
-                         'Shortwave, measurements - model',
+                         'Shortwave, model - measurements',
                          'Longwave Upgoing Radiation Flux (measurements)',
                          'Longwave Clear-Sky Upgoing Radiation Flux (model)',
-                         'Longwave, measurements - model',
+                         'Longwave, model - measurements',
                          'Cloud Radiative Impact (LW difference + SW difference)')
     
     rfcontainer = Instance(chaco.Plot)
@@ -144,11 +144,11 @@ class RFMaps(HasTraits):
         
         self.data = {'Shortwave Upgoing Radiation Flux (measurements)':filedata['swup'], 
                      'Shortwave Clear-Sky Upgoing Radiation Flux (model)':filedata['swupclr'],
-                     'Shortwave, measurements - model':filedata['swup'] - filedata['swupclr'],
+                     'Shortwave, model - measurements':filedata['swupclr'] - filedata['swup'],
                      'Longwave Upgoing Radiation Flux (measurements)':filedata['lwup'],
                      'Longwave Clear-Sky Upgoing Radiation Flux (model)':filedata['lwupclr'],
-                     'Longwave, measurements - model':filedata['lwup'] - filedata['lwupclr'],
-                     'Cloud Radiative Impact (LW difference + SW difference)': filedata['swup'] - filedata['swupclr'] + filedata['lwup'] - filedata['lwupclr'],
+                     'Longwave, model - measurements':filedata['lwupclr'] - filedata['lwup'],
+                     'Cloud Radiative Impact (LW difference + SW difference)': filedata['swupclr'] - filedata['swup'] + filedata['lwupclr'] - filedata['lwup'],
                      }
                     
         self.update_period()
@@ -182,7 +182,7 @@ class RFMaps(HasTraits):
         self.plot_title = 'CERES RF DATA %d months average since %04d-%02d-01' % (self.nmonth, self.show_year, self.month_start)
         self.map_plot.title = self.plot_title
         
-        if 'measurements - model' in self.data_selector:
+        if 'model - measurements' in self.data_selector:
             cmin, cmax = -80, 80
         elif self.data_selector.startswith('Shortwave'):
             cmin, cmax = 0, 250
@@ -194,7 +194,7 @@ class RFMaps(HasTraits):
         
         self.map_colorbar._axis.title = self.data_selector
         
-        if 'measurements - model' in self.data_selector or 'Impact' in self.data_selector:
+        if 'model - measurements' in self.data_selector or 'Impact' in self.data_selector:
             self.map_img.color_mapper = chaco.RdBu(self.map_img.color_mapper.range)
             self.map_img.color_mapper.reverse_colormap()
         else:
@@ -261,9 +261,9 @@ class RFController(Handler):
 
     def open_file(self, ui_info):
 
-        wildcard = 'NetCDF (*.nc)|*.nc?|All files|*.*'
+        wildcard = 'NetCDF (CERES*.nc)|CERES*.nc?|All files|*.*'
         fd = FileDialog(action='open', 
-                        title='Open RadFlux Daily Time Series', 
+                        title='Open CERES EBAF data file', 
                         wildcard=wildcard)
         if fd.open() == OK:
 
