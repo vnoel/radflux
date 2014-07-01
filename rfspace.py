@@ -263,7 +263,7 @@ class RFController(Handler):
 
     def open_file(self, ui_info):
 
-        wildcard = 'NetCDF (CERES*.nc)|CERES*.nc?|All files|*.*'
+        wildcard = 'NetCDF (*.nc)|*.nc|All files|*.*'
         fd = FileDialog(action='open', 
                         title='Open CERES EBAF data file', 
                         wildcard=wildcard)
